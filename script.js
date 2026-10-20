@@ -1,324 +1,292 @@
-/* =================================
-   SUPABASE CONFIGURATION
-================================= */
 
-const SUPABASE_URL = "https://tjsfqxisaijqgwoskeno.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 
 const sb = window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
+  SUPABASE_KEY
 );
 
-/* =================================
-   HTML ELEMENTS
-================================= */
-
-const authScreen = document.getElementById("auth-screen");
-const chatScreen = document.getElementById("chat-screen");
-
-const authForm = document.getElementById("auth-form");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-
-const loginTab = document.getElementById("login-tab");
-const signupTab = document.getElementById("signup-tab");
-const loginButton = document.getElementById("login-button");
-const signupButton = document.getElementById("signup-button");
-
-const authMessage = document.getElementById("auth-message");
-const chatMessage = document.getElementById("chat-message");
-
-const logoutButton = document.getElementById("logout-button");
-const messagesContainer = document.getElementById("messages");
-const messageForm = document.getElementById("message-form");
-const messageInput = document.getElementById("message-input");
-const sendButton = document.getElementById("send-button");
+const $ = (id) => document.getElementById(id);
 
 let authMode = "login";
 let currentUser = null;
+let currentProfile = null;
 let messageChannel = null;
+let profileChannel = null;
+let loadingMessages = false;
 
-/* =================================
-   AUTH SCREEN
-================================= */
-
-function showAuthMessage(message, isError = false) {
-  authMessage.textContent = message;
-  authMessage.style.color = isError ? "#dc2626" : "#2563eb";
-}
-
-function showChatMessage(message, isError = false) {
-  chatMessage.textContent = message;
-  chatMessage.style.color = isError ? "#dc2626" : "#2563eb";
+function setStatus(id, message, type = "") {
+  const el = $(id);
+  el.textContent = message;
+  el.className = `status ${type}`;
 }
 
 function setAuthMode(mode) {
   authMode = mode;
+  const signingUp = mode === "signup";
 
-  const isLogin = mode === "login";
+  $("auth-title").textContent = signingUp
+    ? "Create your account"
+    : "Welcome back!";
 
-  loginTab.classList.toggle("active", isLogin);
-  signupTab.classList.toggle("active", !isLogin);
+  $("auth-submit").textContent = signingUp ? "Sign up" : "Login";
+  $("login-tab").classList.toggle("active", !signingUp);
+  $("signup-tab").classList.toggle("active", signingUp);
+  $("name-field").classList.toggle("hidden", !signingUp);
+  $("username-field").classList.toggle("hidden", !signingUp);
+  $("full-name").required = signingUp;
+  $("username").required = signingUp;
+  $("password").autocomplete = signingUp
+    ? "new-password"
+    : "current-password";
 
-  loginButton.style.display = isLogin ? "block" : "none";
-  signupButton.style.display = isLogin ? "none" : "block";
-
-  passwordInput.autocomplete = isLogin
-    ? "current-password"
-    : "new-password";
-
-  showAuthMessage("");
+  setStatus("auth-status", "");
 }
 
-loginTab.addEventListener("click", () => {
-  setAuthMode("login");
-});
+$("login-tab").addEventListener("click", () => setAuthMode("login"));
+$("signup-tab").addEventListener("click", () => setAuthMode("signup"));
 
-signupTab.addEventListener("click", () => {
-  setAuthMode("signup");
-});
+async function saveUserProfile(user, fullName, username) {
+  const cleanName = String(fullName || "").trim();
+  const cleanUsername = String(username || "").trim();
 
-/* =================================
-   SIGN UP
-================================= */
-
-signupButton.addEventListener("click", async () => {
-  if (!authForm.reportValidity()) return;
-
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  if (password.length < 6) {
-    showAuthMessage(
-      "Password must be at least 6 characters.",
-      true
-    );
-    return;
+  if (!user?.id || !cleanName || !cleanUsername) {
+    throw new Error("Your full name and username are required.");
   }
 
-  signupButton.disabled = true;
-  showAuthMessage("Creating your account...");
+  const { data, error } = await sb
+    .from("profiles")
+    .upsert(
+      {
+        id: user.id,
+        full_name: cleanName,
+        username: cleanUsername
+      },
+      { onConflict: "id" }
+    )
+    .select("id, full_name, username")
+    .single();
+
+  if (error) {
+    console.error("Profile save failed:", error);
+    throw new Error(
+      "Could not save your profile name. Check the profiles table and its RLS policies."
+    );
+  }
+
+  return data;
+}
+
+async function loadProfile(user) {
+  const { data, error } = await sb
+    .from("profiles")
+    .select("id, full_name, username")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Profile load failed:", error);
+    throw new Error("Could not load your profile.");
+  }
+
+  if (data) return data;
+
+  const metadata = user.user_metadata || {};
+  const name = metadata.full_name || user.email?.split("@")[0] || "Classmate";
+  const username = metadata.username || name.replace(/\s+/g, "").toLowerCase();
+
+  return await saveUserProfile(user, name, username);
+}
+
+async function enterChat(user) {
+  currentUser = user;
+  $("auth-screen").classList.add("hidden");
+  $("chat-screen").classList.remove("hidden");
+  $("logout-btn").classList.remove("hidden");
+
+  $("current-user-name").textContent = "Loading profile...";
+  $("current-user-email").textContent = user.email || "";
 
   try {
-    const { data, error } = await sb.auth.signUp({
-      email,
-      password
-    });
+    currentProfile = await loadProfile(user);
+    $("current-user-name").textContent = currentProfile.full_name;
+    $("current-user-email").textContent = user.email || "";
 
-    if (error) throw error;
-
-    if (data.session) {
-      await handleLoggedInUser(data.session.user);
-    } else {
-      showAuthMessage(
-        "Account created! Check your email to confirm your account, then log in."
-      );
-      setAuthMode("login");
-    }
+    await loadMessages();
+    subscribeToMessages();
   } catch (error) {
-    showAuthMessage(error.message, true);
-  } finally {
-    signupButton.disabled = false;
+    console.error(error);
+    setStatus("chat-status", error.message, "error");
   }
-});
+}
 
-/* =================================
-   LOG IN
-================================= */
-
-authForm.addEventListener("submit", async (event) => {
+$("auth-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (authMode !== "login") return;
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const fullName = $("full-name").value.trim();
+  const username = $("username").value.trim();
 
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  loginButton.disabled = true;
-  showAuthMessage("Logging in...");
+  const submit = $("auth-submit");
+  submit.disabled = true;
+  setStatus("auth-status", "Please wait...");
 
   try {
+    if (authMode === "signup") {
+      if (!fullName || !username) {
+        throw new Error("Enter your full name and username.");
+      }
+
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            username
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.user) {
+        throw new Error("Account creation did not return a user.");
+      }
+
+      if (!data.session) {
+        setStatus(
+          "auth-status",
+          "Account created! Check your email to confirm your account, then log in.",
+          "success"
+        );
+        return;
+      }
+
+      currentProfile = await saveUserProfile(
+        data.user,
+        fullName,
+        username
+      );
+
+      await enterChat(data.user);
+      return;
+    }
+
     const { data, error } = await sb.auth.signInWithPassword({
       email,
       password
     });
 
     if (error) throw error;
-
-    await handleLoggedInUser(data.user);
+    await enterChat(data.user);
   } catch (error) {
-    showAuthMessage(error.message, true);
+    console.error("Authentication error:", error);
+    setStatus(
+      "auth-status",
+      error.message || "Something went wrong. Please try again.",
+      "error"
+    );
   } finally {
-    loginButton.disabled = false;
+    submit.disabled = false;
   }
 });
-
-/* =================================
-   LOGIN SESSION
-================================= */
-
-async function handleLoggedInUser(user) {
-  currentUser = user;
-
-  authScreen.hidden = true;
-  chatScreen.hidden = false;
-
-  showChatMessage("");
-  await loadMessages();
-  subscribeToMessages();
-}
-
-async function handleLoggedOutUser() {
-  currentUser = null;
-
-  if (messageChannel) {
-    await sb.removeChannel(messageChannel);
-    messageChannel = null;
-  }
-
-  authScreen.hidden = false;
-  chatScreen.hidden = true;
-
-  messagesContainer.replaceChildren();
-  setAuthMode("login");
-}
-
-/* =================================
-   LOG OUT
-================================= */
-
-logoutButton.addEventListener("click", async () => {
-  logoutButton.disabled = true;
-
-  try {
-    const { error } = await sb.auth.signOut();
-    if (error) throw error;
-
-    await handleLoggedOutUser();
-  } catch (error) {
-    showChatMessage(error.message, true);
-  } finally {
-    logoutButton.disabled = false;
-  }
-});
-
-/* =================================
-   DISPLAY MESSAGES
-================================= */
-
-function renderMessage(message) {
-  const item = document.createElement("div");
-  item.className = "message";
-
-  if (message.user_id === currentUser?.id) {
-    item.classList.add("own-message");
-  }
-
-  const sender = document.createElement("div");
-  sender.className = "message-sender";
-  sender.textContent =
-    message.user_id === currentUser?.id
-      ? "You"
-      : "Classmate";
-
-  const content = document.createElement("p");
-  content.className = "message-content";
-  content.textContent = message.content;
-
-  const time = document.createElement("small");
-  time.className = "message-time";
-  time.textContent = new Date(
-    message.created_at
-  ).toLocaleString([], {
-    dateStyle: "short",
-    timeStyle: "short"
-  });
-
-  item.append(sender, content, time);
-  return item;
-}
-
-function displayMessages(messages) {
-  messagesContainer.replaceChildren();
-
-  if (!messages.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-message";
-    empty.textContent = "No messages yet. Say hello!";
-    messagesContainer.appendChild(empty);
-    return;
-  }
-
-  messages.forEach((message) => {
-    messagesContainer.appendChild(renderMessage(message));
-  });
-
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-/* =================================
-   LOAD CHAT HISTORY
-================================= */
 
 async function loadMessages() {
-  messagesContainer.textContent = "Loading messages...";
+  if (loadingMessages) return;
+  loadingMessages = true;
 
   try {
     const { data, error } = await sb
       .from("messages")
       .select("id, user_id, content, created_at")
       .order("created_at", { ascending: true })
-      .limit(200);
+      .limit(100);
 
     if (error) throw error;
 
-    displayMessages(data || []);
-  } catch (error) {
-    messagesContainer.textContent =
-      "Could not load messages. Check your Supabase messages table and policies.";
+    const userIds = [...new Set((data || []).map((m) => m.user_id).filter(Boolean))];
+    let profiles = {};
 
-    console.error("Load messages error:", error);
+    if (userIds.length) {
+      const { data: profileRows, error: profileError } = await sb
+        .from("profiles")
+        .select("id, full_name, username")
+        .in("id", userIds);
+
+      if (profileError) throw profileError;
+
+      for (const profile of profileRows || []) {
+        profiles[profile.id] = profile;
+      }
+    }
+
+    renderMessages(data || [], profiles);
+  } catch (error) {
+    console.error("Load messages failed:", error);
+    setStatus(
+      "chat-status",
+      "Could not load messages. Check your messages and profiles table policies.",
+      "error"
+    );
+  } finally {
+    loadingMessages = false;
   }
 }
 
-/* =================================
-   SEND A MESSAGE
-================================= */
+function renderMessages(messages, profiles) {
+  const container = $("messages");
+  container.replaceChildren();
 
-messageForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!currentUser) return;
-
-  const content = messageInput.value.trim();
-  if (!content) return;
-
-  sendButton.disabled = true;
-
-  try {
-    const { error } = await sb
-      .from("messages")
-      .insert({
-        user_id: currentUser.id,
-        content
-      });
-
-    if (error) throw error;
-
-    messageInput.value = "";
-    showChatMessage("");
-  } catch (error) {
-    showChatMessage(error.message, true);
-  } finally {
-    sendButton.disabled = false;
-    messageInput.focus();
+  if (!messages.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "No messages yet. Send the first message!";
+    container.appendChild(empty);
+    return;
   }
-});
 
-/* =================================
-   REAL-TIME CHAT
-================================= */
+  for (const message of messages) {
+    const profile = profiles[message.user_id];
+    const senderName = profile?.full_name || profile?.username || "Classmate";
+
+    const bubble = document.createElement("article");
+    bubble.className =
+      "message" + (message.user_id === currentUser?.id ? " own" : "");
+
+    const header = document.createElement("div");
+    header.className = "message-header";
+
+    const sender = document.createElement("span");
+    sender.className = "sender-name";
+    sender.textContent = senderName;
+
+    const time = document.createElement("span");
+    time.className = "message-time";
+
+    const date = new Date(message.created_at);
+    time.textContent = Number.isNaN(date.getTime())
+      ? ""
+      : date.toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        });
+
+    const content = document.createElement("div");
+    content.className = "message-content";
+    content.textContent = message.content;
+
+    header.append(sender, time);
+    bubble.append(header, content);
+    container.appendChild(bubble);
+  }
+
+  container.scrollTop = container.scrollHeight;
+}
 
 function subscribeToMessages() {
   if (messageChannel) {
@@ -330,76 +298,207 @@ function subscribeToMessages() {
     .on(
       "postgres_changes",
       {
-        event: "INSERT",
+        event: "*",
         schema: "public",
         table: "messages"
       },
-      (payload) => {
-        if (!currentUser) return;
-
-        const emptyMessage =
-          messagesContainer.querySelector(".empty-message");
-
-        if (emptyMessage) {
-          emptyMessage.remove();
-        }
-
-        const message = payload.new;
-
-        if (
-          !messagesContainer.querySelector(
-            `[data-message-id="${message.id}"]`
-          )
-        ) {
-          const element = renderMessage(message);
-          element.dataset.messageId = message.id;
-          messagesContainer.appendChild(element);
-          messagesContainer.scrollTop =
-            messagesContainer.scrollHeight;
-        }
-      }
+      () => loadMessages()
     )
-    .subscribe();
+    .subscribe((status) => {
+      if (status === "CHANNEL_ERROR") {
+        setStatus(
+          "chat-status",
+          "Live updates failed. Enable messages in Supabase Realtime.",
+          "error"
+        );
+      }
+    });
 }
 
-/* =================================
-   INITIALIZE APP
-================================= */
+$("message-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-async function initializeApp() {
-  if (
-    SUPABASE_URL.includes("PASTE_YOUR") ||
-    SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR")
-  ) {
-    showAuthMessage(
-      "Add your Supabase project URL and publishable key in script.js.",
-      true
-    );
+  if (!currentUser) {
+    setStatus("chat-status", "Please log in first.", "error");
     return;
   }
 
+  const input = $("message-input");
+  const content = input.value.trim();
+  if (!content) return;
+
+  const button = $("message-form").querySelector("button");
+  button.disabled = true;
+
   try {
-    const { data, error } = await sb.auth.getSession();
+    const { error } = await sb.from("messages").insert({
+      user_id: currentUser.id,
+      content
+    });
 
     if (error) throw error;
 
-    if (data.session) {
-      await handleLoggedInUser(data.session.user);
-    } else {
-      setAuthMode("login");
+    input.value = "";
+    setStatus("chat-status", "");
+    await loadMessages();
+  } catch (error) {
+    console.error("Send message failed:", error);
+    setStatus(
+      "chat-status",
+      "Message could not be sent. Check your messages table and INSERT policy.",
+      "error"
+    );
+  } finally {
+    button.disabled = false;
+    input.focus();
+  }
+});
+
+$("logout-btn").addEventListener("click", async () => {
+  $("logout-btn").disabled = true;
+
+  try {
+    if (messageChannel) {
+      await sb.removeChannel(messageChannel);
+      messageChannel = null;
     }
 
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
-        currentUser = null;
-      }
-    });
+    const { error } = await sb.auth.signOut();
+    if (error) throw error;
+
+    currentUser = null;
+    currentProfile = null;
+    $("chat-screen").classList.add("hidden");
+    $("auth-screen").classList.remove("hidden");
+    $("logout-btn").classList.add("hidden");
+    $("messages").replaceChildren();
+    setStatus("auth-status", "You have logged out.", "success");
   } catch (error) {
-    showAuthMessage(
-      "Could not connect to Supabase: " + error.message,
-      true
+    console.error("Logout failed:", error);
+    setStatus("chat-status", "Could not log out. Please try again.", "error");
+  } finally {
+    $("logout-btn").disabled = false;
+  }
+});
+
+const weatherCodes = {
+  0: "Clear sky",
+  1: "Mostly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Fog",
+  48: "Rime fog",
+  51: "Light drizzle",
+  53: "Moderate drizzle",
+  55: "Heavy drizzle",
+  61: "Light rain",
+  63: "Moderate rain",
+  65: "Heavy rain",
+  71: "Light snow",
+  73: "Moderate snow",
+  75: "Heavy snow",
+  80: "Rain showers",
+  81: "Moderate rain showers",
+  82: "Heavy rain showers",
+  95: "Thunderstorm",
+  96: "Thunderstorm with hail",
+  99: "Severe thunderstorm"
+};
+
+$("weather-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const place = $("weather-city").value.trim();
+  const result = $("weather-result");
+
+  if (!place) return;
+
+  result.textContent = "Checking weather...";
+
+  try {
+    const geoResponse = await fetch(
+      "https://geocoding-api.open-meteo.com/v1/search?name=" +
+      encodeURIComponent(place) +
+      "&count=1&language=en&format=json"
     );
+
+    if (!geoResponse.ok) throw new Error("Weather location search failed.");
+
+    const geo = await geoResponse.json();
+    const location = geo.results?.[0];
+
+    if (!location) {
+      throw new Error("Location not found. Try another city or place.");
+    }
+
+    const weatherResponse = await fetch(
+      "https://api.open-meteo.com/v1/forecast?latitude=" +
+      location.latitude +
+      "&longitude=" +
+      location.longitude +
+      "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m"
+    );
+
+    if (!weatherResponse.ok) throw new Error("Could not retrieve weather.");
+
+    const weather = await weatherResponse.json();
+    const current = weather.current;
+
+    result.replaceChildren();
+
+    const placeName = document.createElement("p");
+    placeName.textContent =
+      location.name + (location.admin1 ? ", " + location.admin1 : "");
+
+    const temperature = document.createElement("p");
+    temperature.className = "weather-temperature";
+    temperature.textContent = Math.round(current.temperature_2m) + "°C";
+
+    const description = document.createElement("p");
+    description.textContent =
+      weatherCodes[current.weather_code] || "Current conditions";
+
+    const feelsLike = document.createElement("p");
+    feelsLike.textContent =
+      "Feels like: " + Math.round(current.apparent_temperature) + "°C";
+
+    const humidity = document.createElement("p");
+    humidity.textContent =
+      "Humidity: " + current.relative_humidity_2m + "%";
+
+    const wind = document.createElement("p");
+    wind.textContent = "Wind: " + current.wind_speed_10m + " km/h";
+
+    for (const element of [
+      placeName,
+      temperature,
+      description,
+      feelsLike,
+      humidity,
+      wind
+    ]) {
+      result.appendChild(element);
+    }
+  } catch (error) {
+    console.error("Weather error:", error);
+    result.textContent = error.message || "Unable to get weather right now.";
+  }
+});
+
+async function startApp() {
+  setAuthMode("login");
+
+  const { data, error } = await sb.auth.getSession();
+
+  if (error) {
+    console.error("Session error:", error);
+    setStatus("auth-status", "Could not check your login session.", "error");
+    return;
+  }
+
+  if (data.session?.user) {
+    await enterChat(data.session.user);
   }
 }
 
-initializeApp();
+startApp();
