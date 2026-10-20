@@ -1,27 +1,168 @@
+:root {
+  --primary: #4169e1;
+  --primary-dark: #3154c5;
+  --background: #f4f7fc;
+  --surface: #ffffff;
+  --text: #202b3c;
+  --muted: #748094;
+  --border: #e4e9f2;
+}
+
 * {
   box-sizing: border-box;
 }
 
-[hidden] {
-  display: none !important;
-}
-
 body {
   margin: 0;
-  min-height: 100vh;
-  padding: 24px 14px;
   font-family: Arial, Helvetica, sans-serif;
-  color: #1e293b;
-  background: linear-gradient(135deg, #dbeafe, #f8fafc);
+  background: var(--background);
+  color: var(--text);
 }
 
-button,
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+h1, h2, h3, p {
+  margin-top: 0;
+}
+
+.brand h1 {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.brand p {
+  font-size: 12px;
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+main {
+  width: min(1100px, 92%);
+  margin: 32px auto;
+  min-height: 65vh;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 5px 20px rgba(25, 45, 85, 0.04);
+}
+
+.auth-panel {
+  width: min(440px, 100%);
+  margin: 35px auto;
+}
+
+.auth-panel h2 {
+  margin-bottom: 8px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tabs {
+  display: flex;
+  background: #f0f3fa;
+  border-radius: 10px;
+  padding: 4px;
+  margin: 22px 0;
+}
+
+.tab {
+  flex: 1;
+  border: 0;
+  padding: 11px;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: bold;
+}
+
+.tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px #0000000d;
+}
+
+label {
+  display: block;
+  margin: 15px 0 7px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
 input {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #d9e0ed;
+  border-radius: 9px;
+  outline: none;
   font: inherit;
+  background: white;
+  color: var(--text);
+}
+
+input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px #4169e11c;
 }
 
 button {
+  font: inherit;
+}
+
+.primary, .secondary {
+  border: 0;
+  padding: 12px 16px;
+  border-radius: 9px;
   cursor: pointer;
+  font-weight: bold;
+}
+
+.primary {
+  background: var(--primary);
+  color: white;
+}
+
+.primary:hover {
+  background: var(--primary-dark);
+}
+
+.secondary {
+  background: #edf1fb;
+  color: var(--primary);
+}
+
+.full {
+  width: 100%;
+  margin-top: 18px;
 }
 
 button:disabled {
@@ -29,417 +170,191 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.app-container {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
+.hidden {
+  display: none !important;
 }
 
-.auth-card,
-.chat-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 430px;
-  margin: 30px auto;
-  padding: 28px;
-}
-
-.logo {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.app-logo {
-  display: block;
-  width: 76px;
-  height: 76px;
-  object-fit: contain;
-  margin: 0 auto 10px;
-}
-
-.logo h1 {
-  color: #2563eb;
-  font-size: 32px;
-  margin: 8px 0;
-  font-weight: 800;
-}
-
-.logo p {
-  margin: 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.auth-tabs {
-  display: flex;
-  gap: 8px;
-  padding: 5px;
-  margin-bottom: 22px;
-  border-radius: 10px;
-  background: #f1f5f9;
-}
-
-.auth-tab {
-  flex: 1;
-  padding: 11px;
-  color: #475569;
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-.auth-tab.active {
-  background: #ffffff;
-  color: #2563eb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-}
-
-#auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-#auth-form label {
-  margin-top: 8px;
-  color: #334155;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-#auth-form input,
-#weather-city,
-#message-input {
-  width: 100%;
-  min-width: 0;
-  padding: 12px 13px;
-  color: #0f172a;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 9px;
-  outline: none;
-}
-
-#auth-form input:focus,
-#weather-city:focus,
-#message-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
-}
-
-.primary-button,
-#weather-search-button,
-#send-button {
-  color: #ffffff;
-  background: #2563eb;
-  border: 0;
-  border-radius: 9px;
-  font-weight: 700;
-  padding: 12px 16px;
-}
-
-.primary-button {
-  margin-top: 12px;
-}
-
-.primary-button:hover,
-#weather-search-button:hover,
-#send-button:hover {
-  background: #1d4ed8;
-}
-
-.status-message {
-  min-height: 18px;
+.status {
+  font-size: 13px;
   margin: 12px 0 0;
-  font-size: 13px;
   overflow-wrap: anywhere;
 }
 
-.chat-card {
-  overflow: hidden;
+.status.error {
+  color: #c0392b;
 }
 
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 18px 20px;
-  color: #ffffff;
-  background: #2563eb;
+.status.success {
+  color: #218653;
 }
 
-.chat-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+.chat-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
-.chat-logo {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 9px;
-  background: #ffffff;
+.sidebar {
+  display: grid;
+  gap: 18px;
 }
 
-.chat-brand h2 {
-  margin: 0 0 4px;
-  color: #ffffff;
-  font-size: 21px;
-}
-
-.chat-brand p {
-  margin: 0;
-  color: #dbeafe;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
-.logout-button {
-  padding: 9px 12px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-.logout-button:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.weather-card {
-  margin: 18px 18px 12px;
-  padding: 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 13px;
-  background: #f8fbff;
-}
-
-.weather-card h3 {
-  margin: 0 0 6px;
-  color: #1d4ed8;
-  font-size: 18px;
-}
-
-.weather-subtitle {
-  margin: 0 0 12px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-#weather-form {
-  display: flex;
-  gap: 8px;
-}
-
-#weather-city {
-  flex: 1;
-}
-
-#weather-search-button {
-  flex-shrink: 0;
-}
-
-.weather-status {
-  margin: 10px 0 0;
-  color: #475569;
-  font-size: 13px;
-  overflow-wrap: anywhere;
+.sidebar h3 {
+  margin-bottom: 8px;
 }
 
 .weather-result {
-  margin-top: 12px;
-  padding: 14px;
+  margin-top: 16px;
+  padding: 13px;
+  background: #f3f6ff;
   border-radius: 10px;
-  background: #eff6ff;
+  overflow-wrap: anywhere;
 }
 
-.weather-location {
-  margin: 0;
-  color: #334155;
-  font-weight: 700;
+.weather-result p {
+  margin-bottom: 7px;
 }
 
 .weather-temperature {
-  margin: 6px 0;
-  color: #1d4ed8;
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 30px;
+  font-weight: bold;
+  color: var(--primary);
 }
 
-.weather-description {
-  margin: 0 0 12px;
-  color: #334155;
-  font-weight: 600;
+.account-panel p {
+  overflow-wrap: anywhere;
 }
 
-.weather-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  color: #475569;
-  font-size: 12px;
+.chat-panel {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.weather-updated {
-  margin: 12px 0 0;
-  color: #64748b;
-  font-size: 11px;
-}
-
-.chat-title {
+.chat-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
+  gap: 12px;
+  padding: 22px;
+  border-bottom: 1px solid var(--border);
 }
 
-.chat-title h3 {
-  margin: 0;
-  font-size: 17px;
+.chat-heading h2 {
+  margin-bottom: 5px;
 }
 
-#connection-status {
-  color: #64748b;
-  font-size: 11px;
+.chat-heading p {
+  margin-bottom: 0;
 }
 
-.messages-container {
+.online-label {
+  color: #218653;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.messages {
+  height: 430px;
+  overflow-y: auto;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 13px;
-  height: 360px;
-  overflow-y: auto;
-  padding: 18px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.empty-message {
-  margin: auto;
-  color: #94a3b8;
-  text-align: center;
-  font-size: 14px;
+  gap: 15px;
 }
 
 .message {
+  max-width: 85%;
   align-self: flex-start;
-  max-width: 82%;
-  min-width: 90px;
-  padding: 10px 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px 12px 12px 3px;
+  background: #f0f3fa;
+  border-radius: 4px 14px 14px 14px;
+  padding: 11px 14px;
   overflow-wrap: anywhere;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
 }
 
-.message.own-message {
+.message.own {
   align-self: flex-end;
-  background: #dbeafe;
-  border-color: #bfdbfe;
-  border-radius: 12px 12px 3px 12px;
+  background: #e6edff;
+  border-radius: 14px 4px 14px 14px;
 }
 
-.message-sender {
+.message-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   margin-bottom: 6px;
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 800;
 }
 
-.message-content {
-  color: #1e293b;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+.sender-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--primary-dark);
 }
 
 .message-time {
-  margin-top: 7px;
-  color: #64748b;
-  text-align: right;
+  color: var(--muted);
   font-size: 10px;
+}
+
+.message-content {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 .message-form {
   display: flex;
-  gap: 9px;
-  padding: 16px 18px 6px;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
 }
 
-#message-input {
-  flex: 1;
+.message-form input {
+  min-width: 0;
 }
 
-#send-button {
-  min-width: 76px;
+.message-form button {
+  flex-shrink: 0;
 }
 
-#chat-message {
-  padding: 0 18px 14px;
-  color: #475569;
+footer {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
 }
 
-@media (max-width: 480px) {
-  body {
-    padding: 10px;
+@media (max-width: 720px) {
+  main {
+    margin: 20px auto;
   }
 
-  .auth-card {
-    padding: 22px 18px;
-    margin: 18px auto;
+  .chat-layout {
+    grid-template-columns: 1fr;
   }
 
-  .chat-header {
-    padding: 14px;
+  .sidebar {
+    grid-template-columns: 1fr;
   }
 
-  .chat-brand h2 {
-    font-size: 18px;
+  .messages {
+    height: 380px;
   }
 
-  .chat-logo {
-    width: 36px;
-    height: 36px;
+  .chat-heading {
+    padding: 16px;
   }
 
-  .weather-card {
-    margin: 12px;
-    padding: 12px;
-  }
-
-  .messages-container {
-    height: 320px;
-    padding: 12px;
-  }
-
-  .message {
-    max-width: 90%;
-  }
-
-  .chat-title {
-    padding: 10px 12px;
+  .online-label {
+    font-size: 10px;
   }
 
   .message-form {
-    padding: 12px 12px 6px;
+    padding: 12px;
   }
 
-  #weather-search-button {
-    padding: 10px;
+  .message-form button {
+    padding: 12px;
   }
 }
