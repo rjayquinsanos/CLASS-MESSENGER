@@ -4,155 +4,129 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Class Chat</title>
+
   <link rel="stylesheet" href="style.css">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js" defer></script>
 </head>
 <body>
-  <main class="app">
+  <main class="app-container">
 
+    <!-- LOGIN AND SIGN UP SCREEN -->
     <section id="auth-screen" class="auth-card">
-      <div class="brand">
-        <div class="brand-icon">CC</div>
+
+      <div class="logo">
+        <img src="logo.png" alt="Class Chat Logo" class="app-logo">
         <h1>Class Chat</h1>
-        <p>Connect with your classmates.</p>
+        <p>Connect with your classmates</p>
       </div>
 
       <div class="auth-tabs">
-        <button id="login-tab" class="tab active" type="button">Login</button>
-        <button id="signup-tab" class="tab" type="button">Sign Up</button>
+        <button
+          id="login-tab"
+          class="auth-tab active"
+          type="button"
+        >
+          Log In
+        </button>
+
+        <button
+          id="signup-tab"
+          class="auth-tab"
+          type="button"
+        >
+          Sign Up
+        </button>
       </div>
 
       <form id="auth-form">
-        <div id="name-field" class="field" hidden>
-          <label for="username">Full name</label>
-          <input
-            id="username"
-            type="text"
-            placeholder="Enter your full name"
-            maxlength="80"
-            autocomplete="name"
-          >
-        </div>
+        <label for="email">Email Address</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+          required
+        >
 
-        <div class="field">
-          <label for="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            autocomplete="email"
-            required
-          >
-        </div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
 
-        <div class="field">
-          <label for="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            minlength="6"
-            autocomplete="current-password"
-            required
-          >
-        </div>
-
-        <button id="auth-submit" class="primary-btn" type="submit">
-          Login
+        <button
+          id="login-button"
+          class="primary-button"
+          type="submit"
+        >
+          Log In
         </button>
 
-        <p id="auth-status" class="status" role="status"></p>
+        <button
+          id="signup-button"
+          class="secondary-button"
+          type="button"
+        >
+          Create Account
+        </button>
+
+        <p id="auth-message" role="status"></p>
       </form>
     </section>
 
+    <!-- CHAT SCREEN -->
     <section id="chat-screen" class="chat-card" hidden>
+
       <header class="chat-header">
-        <div class="brand brand-small">
-          <div class="brand-icon">CC</div>
+        <div class="chat-brand">
+          <img src="logo.png" alt="" class="chat-logo">
           <div>
-            <h1>Class Chat</h1>
-            <p id="welcome-text">Welcome!</p>
+            <h2>Class Chat</h2>
+            <p>Classroom messages</p>
           </div>
         </div>
-        <button id="logout-btn" class="logout-btn" type="button">
-          Logout
+
+        <button id="logout-button" type="button">
+          Log Out
         </button>
       </header>
 
-      <section class="weather-card">
-        <div>
-          <h2>Weather Search</h2>
-          <p>Check the current weather in any city.</p>
-        </div>
+      <div
+        id="messages"
+        class="messages-container"
+        aria-live="polite"
+      >
+        <p class="empty-message">
+          Loading messages...
+        </p>
+      </div>
 
-        <form id="weather-form" class="weather-form">
-          <input
-            id="weather-city"
-            type="text"
-            placeholder="Enter a city, e.g. Manila"
-            value="Manila"
-            required
-          >
-          <button class="primary-btn" type="submit">Search</button>
-        </form>
+      <form id="message-form" class="message-form">
+        <input
+          id="message-input"
+          name="message"
+          type="text"
+          placeholder="Write a message..."
+          maxlength="2000"
+          autocomplete="off"
+          required
+        >
 
-        <p id="weather-status" class="status" role="status"></p>
-        <div id="weather-result" class="weather-result" hidden>
-          <h3 id="weather-location"></h3>
-          <p id="weather-description"></p>
-          <div class="weather-details">
-            <div>
-              <span>Temperature</span>
-              <strong id="weather-temperature"></strong>
-            </div>
-            <div>
-              <span>Feels like</span>
-              <strong id="weather-feels"></strong>
-            </div>
-            <div>
-              <span>Humidity</span>
-              <strong id="weather-humidity"></strong>
-            </div>
-            <div>
-              <span>Wind</span>
-              <strong id="weather-wind"></strong>
-            </div>
-          </div>
-          <p id="weather-time" class="weather-time"></p>
-        </div>
-      </section>
+        <button id="send-button" type="submit">
+          Send
+        </button>
+      </form>
 
-      <section class="messages-section">
-        <div class="messages-heading">
-          <h2>Classroom Messages</h2>
-          <span class="live-indicator">
-            <span></span> Live chat
-          </span>
-        </div>
-
-        <div id="messages" class="messages">
-          <p class="empty-state">Loading messages...</p>
-        </div>
-
-        <form id="message-form" class="message-form">
-          <input
-            id="message-input"
-            type="text"
-            placeholder="Write a message..."
-            maxlength="2000"
-            autocomplete="off"
-            required
-          >
-          <button id="send-btn" class="primary-btn" type="submit">
-            Send
-          </button>
-        </form>
-        <p id="message-status" class="status" role="status"></p>
-      </section>
+      <p id="chat-message" role="status"></p>
     </section>
 
   </main>
-  <script src="script.js" defer></script>
 </body>
 </html>
