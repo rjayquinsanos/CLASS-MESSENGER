@@ -5,14 +5,10 @@
 const SUPABASE_URL = "https://tjsfqxisaijqgwoskeno.supabase.co";
 const SUPABASE_KEY = "sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci";
 
-const configIsReady =
-  SUPABASE_URL.startsWith("https://") &&
-  !SUPABASE_URL.includes("https://tjsfqxisaijqgwoskeno.supabase.co") &&
-  !SUPABASE_KEY.includes("sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci");
-
-const sb = configIsReady
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+const sb = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 
 // ======================================
@@ -71,10 +67,6 @@ function setStatus(element, message = "", type = "") {
   if (type) {
     element.classList.add(type);
   }
-}
-
-function showAuthError(message) {
-  setStatus(authStatus, message, "error");
 }
 
 
@@ -148,7 +140,6 @@ async function saveUserProfile(user, enteredName = "") {
   }
 
   profileCache.set(user.id, name);
-
   return name;
 }
 
@@ -172,7 +163,6 @@ async function loadProfile(user) {
       getDisplayName(user)
     ).trim();
 
-    // Update both fields to keep the profile consistent.
     if (
       data.full_name !== savedName ||
       data.username !== savedName
@@ -185,7 +175,6 @@ async function loadProfile(user) {
     return savedName;
   }
 
-  // Create a profile if this account does not have one yet.
   return await saveUserProfile(user);
 }
 
@@ -194,9 +183,7 @@ async function loadProfilesForMessages(userIds) {
     id => id && !profileCache.has(id)
   );
 
-  if (uniqueIds.length === 0) {
-    return;
-  }
+  if (uniqueIds.length === 0) return;
 
   const { data, error } = await sb
     .from("profiles")
@@ -227,24 +214,21 @@ async function loadProfilesForMessages(userIds) {
 authForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  if (!sb) {
-    showAuthError(
-      "Please add your Supabase project URL and public key in script.js."
-    );
-    return;
-  }
-
   const email = emailInput.value.trim();
   const password = passwordInput.value;
   const fullName = usernameInput.value.trim();
 
   if (authMode === "signup" && !fullName) {
-    showAuthError("Please enter your full name.");
+    setStatus(authStatus, "Please enter your full name.", "error");
     return;
   }
 
   if (authMode === "signup" && fullName.length > 80) {
-    showAuthError("Your name must be 80 characters or fewer.");
+    setStatus(
+      authStatus,
+      "Your name must be 80 characters or fewer.",
+      "error"
+    );
     return;
   }
 
@@ -264,9 +248,7 @@ authForm.addEventListener("submit", async event => {
         }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data.user && data.session) {
         currentUser = data.user;
@@ -276,7 +258,7 @@ authForm.addEventListener("submit", async event => {
       } else {
         setStatus(
           authStatus,
-          "Account created! Check your email to confirm your account, then log in.",
+          "Account created! Confirm your email, then log in.",
           "success"
         );
 
@@ -289,16 +271,18 @@ authForm.addEventListener("submit", async event => {
         password
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       currentUser = data.user;
       await startChat(data.user);
     }
   } catch (error) {
     console.error(error);
-    showAuthError(error.message || "Something went wrong.");
+    setStatus(
+      authStatus,
+      error.message || "Something went wrong.",
+      "error"
+    );
   } finally {
     authSubmit.disabled = false;
   }
@@ -341,10 +325,7 @@ logoutBtn.addEventListener("click", async () => {
     }
 
     const { error } = await sb.auth.signOut();
-
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     currentUser = null;
     knownMessageIds.clear();
@@ -360,11 +341,7 @@ logoutBtn.addEventListener("click", async () => {
     setStatus(authStatus, "You have logged out.", "success");
     setAuthMode("login");
   } catch (error) {
-    setStatus(
-      authStatus,
-      error.message || "Could not log out.",
-      "error"
-    );
+    setStatus(authStatus, error.message, "error");
   } finally {
     logoutBtn.disabled = false;
   }
@@ -376,15 +353,11 @@ logoutBtn.addEventListener("click", async () => {
 // ======================================
 
 function formatMessageTime(timestamp) {
-  if (!timestamp) {
-    return "";
-  }
+  if (!timestamp) return "";
 
   const date = new Date(timestamp);
 
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
+  if (Number.isNaN(date.getTime())) return "";
 
   return date.toLocaleString([], {
     month: "short",
@@ -395,27 +368,19 @@ function formatMessageTime(timestamp) {
 }
 
 function renderMessage(message) {
-  if (!currentUser || !message.id) {
-    return;
-  }
-
-  if (knownMessageIds.has(message.id)) {
-    return;
-  }
+  if (!currentUser || !message.id) return;
+  if (knownMessageIds.has(message.id)) return;
 
   knownMessageIds.add(message.id);
 
   const isOwnMessage = message.user_id === currentUser.id;
-
   const senderName =
     profileCache.get(message.user_id) || "Classmate";
 
   const wrapper = document.createElement("article");
   wrapper.className = "message";
 
-  if (isOwnMessage) {
-    wrapper.classList.add("own");
-  }
+  if (isOwnMessage) wrapper.classList.add("own");
 
   const sender = document.createElement("div");
   sender.className = "message-sender";
@@ -443,9 +408,7 @@ function renderMessage(message) {
 // ======================================
 
 async function loadMessages() {
-  if (!currentUser || loadingMessages) {
-    return;
-  }
+  if (!currentUser || loadingMessages) return;
 
   loadingMessages = true;
   messagesContainer.replaceChildren();
@@ -463,9 +426,7 @@ async function loadMessages() {
       .order("created_at", { ascending: true })
       .limit(200);
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     messagesContainer.replaceChildren();
 
@@ -476,18 +437,14 @@ async function loadMessages() {
         rows.map(message => message.user_id)
       );
 
-      // If the user logged out while the query was running, stop.
-      if (!currentUser) {
-        return;
-      }
+      if (!currentUser) return;
 
       rows.forEach(renderMessage);
-    }
-
-    if (rows.length === 0) {
+    } else {
       const empty = document.createElement("p");
       empty.className = "empty-state";
-      empty.textContent = "No messages yet. Start the conversation!";
+      empty.textContent =
+        "No messages yet. Start the conversation!";
       messagesContainer.appendChild(empty);
     }
   } catch (error) {
@@ -497,7 +454,9 @@ async function loadMessages() {
 
     const errorText = document.createElement("p");
     errorText.className = "empty-state";
-    errorText.textContent = "Could not load messages: " + error.message;
+    errorText.textContent =
+      "Could not load messages: " + error.message;
+
     messagesContainer.appendChild(errorText);
   } finally {
     loadingMessages = false;
@@ -510,9 +469,7 @@ async function loadMessages() {
 // ======================================
 
 function subscribeToMessages() {
-  if (!currentUser) {
-    return;
-  }
+  if (!currentUser) return;
 
   if (messageChannel) {
     sb.removeChannel(messageChannel);
@@ -537,17 +494,14 @@ function subscribeToMessages() {
 
         await loadProfilesForMessages([message.user_id]);
 
-        if (!currentUser) {
-          return;
-        }
+        if (!currentUser) return;
 
         renderMessage(message);
 
-        const emptyState = messagesContainer.querySelector(".empty-state");
+        const emptyState =
+          messagesContainer.querySelector(".empty-state");
 
-        if (emptyState) {
-          emptyState.remove();
-        }
+        if (emptyState) emptyState.remove();
       }
     )
     .subscribe(status => {
@@ -572,9 +526,7 @@ messageForm.addEventListener("submit", async event => {
 
   const content = messageInput.value.trim();
 
-  if (!content) {
-    return;
-  }
+  if (!content) return;
 
   if (content.length > 2000) {
     setStatus(
@@ -598,18 +550,14 @@ messageForm.addEventListener("submit", async event => {
       .select("id, user_id, content, created_at")
       .single();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    // Render immediately; the real-time event won't duplicate it.
     renderMessage(data);
 
-    const emptyState = messagesContainer.querySelector(".empty-state");
+    const emptyState =
+      messagesContainer.querySelector(".empty-state");
 
-    if (emptyState) {
-      emptyState.remove();
-    }
+    if (emptyState) emptyState.remove();
 
     messageInput.value = "";
     setStatus(messageStatus);
@@ -663,7 +611,8 @@ function getWeatherDescription(code) {
     99: "Thunderstorm with heavy hail"
   };
 
-  return descriptions[code] || "Weather information unavailable";
+  return descriptions[code] ||
+    "Weather information unavailable";
 }
 
 weatherForm.addEventListener("submit", async event => {
@@ -699,12 +648,12 @@ weatherForm.addEventListener("submit", async event => {
 
     const locationData = await locationResponse.json();
 
-    if (requestId !== weatherRequestId) {
-      return;
-    }
+    if (requestId !== weatherRequestId) return;
 
-    if (!locationData.results || locationData.results.length === 0) {
-      throw new Error("City not found. Check the spelling and try again.");
+    if (!locationData.results?.length) {
+      throw new Error(
+        "City not found. Check the spelling and try again."
+      );
     }
 
     const place = locationData.results[0];
@@ -718,8 +667,6 @@ weatherForm.addEventListener("submit", async event => {
           "temperature_2m",
           "relative_humidity_2m",
           "apparent_temperature",
-          "is_day",
-          "precipitation",
           "weather_code",
           "wind_speed_10m"
         ].join(","),
@@ -734,14 +681,14 @@ weatherForm.addEventListener("submit", async event => {
 
     const forecastData = await forecastResponse.json();
 
-    if (requestId !== weatherRequestId) {
-      return;
-    }
+    if (requestId !== weatherRequestId) return;
 
     const current = forecastData.current;
 
     if (!current) {
-      throw new Error("Weather data is not available for this city.");
+      throw new Error(
+        "Weather data is not available for this city."
+      );
     }
 
     const locationParts = [
@@ -776,9 +723,7 @@ weatherForm.addEventListener("submit", async event => {
     weatherResult.hidden = false;
     setStatus(weatherStatus);
   } catch (error) {
-    if (requestId !== weatherRequestId) {
-      return;
-    }
+    if (requestId !== weatherRequestId) return;
 
     setStatus(
       weatherStatus,
@@ -796,27 +741,20 @@ weatherForm.addEventListener("submit", async event => {
 async function restoreSession() {
   setAuthMode("login");
 
-  if (!sb) {
-    showAuthError(
-      "Setup required: add your Supabase project URL and public key in script.js."
-    );
-    return;
-  }
-
   try {
     const { data, error } = await sb.auth.getSession();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     if (data.session?.user) {
       await startChat(data.session.user);
     }
   } catch (error) {
     console.error(error);
-    showAuthError(
-      "Could not restore your session: " + error.message
+    setStatus(
+      authStatus,
+      "Could not restore your session: " + error.message,
+      "error"
     );
   }
 }
