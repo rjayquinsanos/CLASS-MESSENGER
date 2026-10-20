@@ -3,142 +3,130 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1746a2">
-  <title>Class Chat | Connect & Learn</title>
+  <title>Class Chat</title>
+
   <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <main class="app-shell">
+  <main class="app-container">
 
-    <section id="auth-screen" class="auth-layout">
-      <div class="brand-panel">
-        <div class="brand-logo">CC</div>
-        <p class="eyebrow">YOUR CLASSROOM, CONNECTED</p>
-        <h1>Learn together.<br>Stay connected.</h1>
-        <p class="brand-description">
-          One place for your classmates to share ideas,
-          ask questions, and stay updated.
-        </p>
-        <div class="decorative-circles" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
+    <!-- LOGIN AND SIGN UP SCREEN -->
+    <section id="auth-screen" class="auth-card">
+
+      <div class="logo">
+        <img src="logo.png" alt="Class Chat Logo" class="app-logo">
+        <h1>Class Chat</h1>
+        <p>Connect with your classmates</p>
       </div>
 
-      <div class="auth-panel">
-        <div class="mobile-brand">
-          <div class="brand-logo small">CC</div>
-          <span>Class Chat</span>
-        </div>
+      <div class="auth-tabs">
+        <button
+          id="login-tab"
+          class="auth-tab active"
+          type="button"
+        >
+          Log In
+        </button>
 
-        <p class="eyebrow blue-text">WELCOME TO CLASS CHAT</p>
-        <h2 id="auth-title">Welcome back!</h2>
-        <p class="muted" id="auth-subtitle">
-          Sign in to continue to your class.
-        </p>
-
-        <form id="auth-form">
-          <div id="name-field" class="field hidden">
-            <label for="display-name">Display name</label>
-            <input id="display-name" type="text"
-              placeholder="Your name" autocomplete="name">
-          </div>
-
-          <div class="field">
-            <label for="email">Email address</label>
-            <input id="email" type="email"
-              placeholder="you@example.com"
-              autocomplete="email" required>
-          </div>
-
-          <div class="field">
-            <label for="password">Password</label>
-            <input id="password" type="password"
-              placeholder="Enter your password"
-              autocomplete="current-password"
-              minlength="6" required>
-          </div>
-
-          <p id="auth-status" class="status" role="status"
-             aria-live="polite"></p>
-
-          <button id="login-button" class="primary-button"
-            type="submit">Log In</button>
-
-          <button id="signup-button" class="secondary-button"
-            type="submit">Create Account</button>
-        </form>
-
-        <p class="privacy-note">
-          Your class conversations, all in one place.
-        </p>
+        <button
+          id="signup-tab"
+          class="auth-tab"
+          type="button"
+        >
+          Sign Up
+        </button>
       </div>
+
+      <form id="auth-form">
+        <label for="email">Email Address</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+          required
+        >
+
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button
+          id="login-button"
+          class="primary-button"
+          type="submit"
+        >
+          Log In
+        </button>
+
+        <button
+          id="signup-button"
+          class="secondary-button"
+          type="button"
+        >
+          Create Account
+        </button>
+
+        <p id="auth-message" role="status"></p>
+      </form>
     </section>
 
-    <section id="chat-screen" class="chat-layout hidden">
+    <!-- CHAT SCREEN -->
+    <section id="chat-screen" class="chat-card" hidden>
+
       <header class="chat-header">
-        <div class="header-brand">
-          <div class="brand-logo small">CC</div>
+        <div class="chat-brand">
+          <img src="logo.png" alt="" class="chat-logo">
           <div>
             <h2>Class Chat</h2>
-            <p>Connect with your classmates</p>
+            <p>Classroom messages</p>
           </div>
         </div>
-        <button id="logout-button" class="logout-button"
-          type="button">Log Out</button>
+
+        <button id="logout-button" type="button">
+          Log Out
+        </button>
       </header>
 
-      <div class="welcome-strip">
-        <div>
-          <p class="eyebrow blue-text">CLASSROOM COMMUNITY</p>
-          <h1>Hello, <span id="current-name">Student</span>!</h1>
-          <p class="muted">Share an update or join the conversation.</p>
-        </div>
-        <div class="online-mark"><span></span> Class messages</div>
+      <div
+        id="messages"
+        class="messages-container"
+        aria-live="polite"
+      >
+        <p class="empty-message">
+          Loading messages...
+        </p>
       </div>
 
-      <div class="chat-card">
-        <div class="messages-heading">
-          <div>
-            <h2>Classroom Messages</h2>
-            <p class="muted">Be kind. Help each other learn.</p>
-          </div>
-          <span class="message-icon">✉</span>
-        </div>
+      <form id="message-form" class="message-form">
+        <input
+          id="message-input"
+          name="message"
+          type="text"
+          placeholder="Write a message..."
+          maxlength="2000"
+          autocomplete="off"
+          required
+        >
 
-        <p id="chat-status" class="status" role="status"
-           aria-live="polite"></p>
+        <button id="send-button" type="submit">
+          Send
+        </button>
+      </form>
 
-        <div id="message-list" class="message-list"
-          aria-live="polite" aria-label="Class messages">
-          <div class="empty-state">
-            <div class="empty-icon">💬</div>
-            <h3>Welcome to your class chat</h3>
-            <p>Messages will appear here.</p>
-          </div>
-        </div>
-
-        <form id="message-form" class="message-form">
-          <label class="sr-only" for="message-input">
-            Write a message
-          </label>
-          <input id="message-input" type="text"
-            maxlength="2000"
-            placeholder="Write a message to your class..."
-            autocomplete="off" required>
-          <button id="send-button" class="send-button"
-            type="submit">Send <span aria-hidden="true">➤</span></button>
-        </form>
-        <p class="composer-hint">Keep your messages respectful and helpful.</p>
-      </div>
-
-      <footer class="chat-footer">
-        Made for learning, sharing, and growing together.
-      </footer>
+      <p id="chat-message" role="status"></p>
     </section>
 
   </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js"></script>
 </body>
 </html>
