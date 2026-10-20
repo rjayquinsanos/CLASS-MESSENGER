@@ -3,151 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#2563eb">
   <title>Class Chat</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
-  <main class="app-container">
-
-    <!-- LOGIN AND SIGNUP -->
-    <section id="auth-screen" class="auth-card">
-      <div class="logo">
-        <img src="logo.png" alt="Class Chat logo" class="app-logo"
-             onerror="this.style.display='none'">
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="Class Chat logo" class="logo">
+      <div>
         <h1>Class Chat</h1>
         <p>Connect with your classmates</p>
       </div>
+    </div>
+    <button id="logout-btn" class="secondary hidden">Log out</button>
+  </header>
 
-      <div class="auth-tabs">
-        <button id="login-tab" class="auth-tab active" type="button">
-          Login
-        </button>
-        <button id="signup-tab" class="auth-tab" type="button">
-          Sign Up
-        </button>
+  <main>
+    <section id="auth-screen" class="panel auth-panel">
+      <h2 id="auth-title">Welcome back!</h2>
+      <p class="muted">Sign in or create your class account.</p>
+
+      <div class="tabs">
+        <button id="login-tab" class="tab active" type="button">Login</button>
+        <button id="signup-tab" class="tab" type="button">Sign up</button>
       </div>
 
       <form id="auth-form">
-        <label for="username">Name or username</label>
-        <input
-          type="text"
-          id="username"
-          placeholder="Enter your name"
-          maxlength="40"
-          autocomplete="nickname"
-          hidden
-        >
+        <div id="name-field" class="hidden">
+          <label for="full-name">Full name</label>
+          <input id="full-name" type="text" maxlength="80"
+            placeholder="Enter your full name" autocomplete="name">
+        </div>
+
+        <div id="username-field" class="hidden">
+          <label for="username">Username</label>
+          <input id="username" type="text" maxlength="30"
+            placeholder="Choose a username" autocomplete="username">
+        </div>
 
         <label for="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          placeholder="Enter your email"
-          autocomplete="email"
-          required
-        >
+        <input id="email" type="email" required
+          placeholder="you@example.com" autocomplete="email">
 
         <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          placeholder="Enter your password"
-          minlength="6"
-          autocomplete="current-password"
-          required
-        >
+        <input id="password" type="password" required minlength="6"
+          placeholder="At least 6 characters" autocomplete="current-password">
 
-        <button id="auth-submit" class="primary-button" type="submit">
-          Login
-        </button>
+        <button id="auth-submit" class="primary full" type="submit">Login</button>
       </form>
-
-      <p id="auth-message" class="status-message" role="status"></p>
+      <p id="auth-status" class="status" role="status"></p>
     </section>
 
-    <!-- CHAT SCREEN -->
-    <section id="chat-screen" class="chat-card" hidden>
-      <header class="chat-header">
-        <div class="chat-brand">
-          <img src="logo.png" alt="" class="chat-logo"
-               onerror="this.style.display='none'">
+    <section id="chat-screen" class="chat-layout hidden">
+      <aside class="sidebar">
+        <div class="panel">
+          <h3>Weather</h3>
+          <p class="muted">Check the weather in your area.</p>
+          <form id="weather-form">
+            <label for="weather-city">City or place</label>
+            <input id="weather-city" type="text"
+              placeholder="e.g. Cainta, Rizal" required>
+            <button class="primary full" type="submit">Check weather</button>
+          </form>
+          <div id="weather-result" class="weather-result">
+            <p class="muted">Weather information will appear here.</p>
+          </div>
+        </div>
+
+        <div class="panel account-panel">
+          <h3>Your account</h3>
+          <p id="current-user-name">Loading profile...</p>
+          <p id="current-user-email" class="muted"></p>
+        </div>
+      </aside>
+
+      <section class="panel chat-panel">
+        <div class="chat-heading">
           <div>
-            <h2>Class Chat</h2>
-            <p id="welcome-message">Welcome!</p>
+            <h2>Classroom Chat</h2>
+            <p class="muted">Messages from your classmates</p>
           </div>
+          <span class="online-label">● Connected</span>
         </div>
 
-        <button id="logout-button" class="logout-button" type="button">
-          Logout
-        </button>
-      </header>
+        <div id="messages" class="messages">
+          <p class="muted">Loading messages...</p>
+        </div>
 
-      <!-- WEATHER SEARCH -->
-      <section class="weather-card">
-        <h3>Weather Search</h3>
-        <p class="weather-subtitle">
-          Check the current weather in any city.
-        </p>
-
-        <form id="weather-form">
-          <input
-            type="text"
-            id="weather-city"
-            value="Manila"
-            placeholder="Search a city, e.g. Manila"
-            aria-label="City name"
-            required
-          >
-          <button type="submit" id="weather-search-button">
-            Search
-          </button>
+        <form id="message-form" class="message-form">
+          <input id="message-input" type="text" maxlength="2000"
+            placeholder="Write a message..." autocomplete="off" required>
+          <button class="primary" type="submit">Send</button>
         </form>
-
-        <p id="weather-status" class="weather-status" role="status"></p>
-
-        <div id="weather-result" class="weather-result" hidden>
-          <p id="weather-location" class="weather-location"></p>
-          <p id="weather-temperature" class="weather-temperature"></p>
-          <p id="weather-description" class="weather-description"></p>
-          <div class="weather-details">
-            <span id="weather-feels"></span>
-            <span id="weather-humidity"></span>
-            <span id="weather-wind"></span>
-          </div>
-          <p id="weather-updated" class="weather-updated"></p>
-        </div>
+        <p id="chat-status" class="status" role="status"></p>
       </section>
-
-      <!-- MESSAGES -->
-      <div class="chat-title">
-        <h3>Classroom Messages</h3>
-        <span id="connection-status">Connecting...</span>
-      </div>
-
-      <div id="messages" class="messages-container"
-           aria-live="polite">
-        <p class="empty-message">Loading messages...</p>
-      </div>
-
-      <form id="message-form" class="message-form">
-        <input
-          type="text"
-          id="message-input"
-          placeholder="Write a message..."
-          maxlength="2000"
-          autocomplete="off"
-          aria-label="Write a message"
-          required
-        >
-        <button type="submit" id="send-button">Send</button>
-      </form>
-
-      <p id="chat-message" class="status-message" role="status"></p>
     </section>
-
   </main>
+
+  <footer>Class Chat · Made for classmates</footer>
 </body>
 </html>
