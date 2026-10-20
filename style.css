@@ -2,6 +2,17 @@
   box-sizing: border-box;
 }
 
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #3730a3;
+  --background: #f3f5fb;
+  --surface: #ffffff;
+  --text: #20243a;
+  --muted: #747b91;
+  --border: #e5e7ef;
+  --own-message: #e8eaff;
+}
+
 [hidden] {
   display: none !important;
 }
@@ -10,9 +21,9 @@ body {
   margin: 0;
   min-height: 100vh;
   padding: 24px 14px;
+  background: var(--background);
+  color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
-  color: #1e293b;
-  background: linear-gradient(135deg, #dbeafe, #f8fafc);
 }
 
 button,
@@ -24,55 +35,50 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.app-container {
+.app {
   width: 100%;
-  max-width: 760px;
+  max-width: 900px;
   margin: 0 auto;
-}
-
-.auth-card,
-.chat-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
 }
 
 .auth-card {
   width: 100%;
-  max-width: 430px;
-  margin: 30px auto;
-  padding: 28px;
+  max-width: 440px;
+  margin: 45px auto;
+  padding: 30px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(28, 35, 80, 0.07);
 }
 
-.logo {
+.brand {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.app-logo {
-  display: block;
-  width: 76px;
-  height: 76px;
-  object-fit: contain;
-  margin: 0 auto 10px;
-}
-
-.logo h1 {
-  color: #2563eb;
-  font-size: 32px;
-  margin: 8px 0;
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 10px;
+  border-radius: 17px;
+  background: var(--primary);
+  color: white;
   font-weight: 800;
+  font-size: 19px;
 }
 
-.logo p {
+.brand h1 {
   margin: 0;
-  color: #64748b;
+  font-size: 27px;
+}
+
+.brand p {
+  margin: 8px 0 0;
+  color: var(--muted);
   font-size: 14px;
 }
 
@@ -81,365 +87,380 @@ button:disabled {
   gap: 8px;
   padding: 5px;
   margin-bottom: 22px;
-  border-radius: 10px;
-  background: #f1f5f9;
+  border-radius: 11px;
+  background: #f1f2f9;
 }
 
-.auth-tab {
+.tab {
   flex: 1;
   padding: 11px;
-  color: #475569;
-  background: transparent;
-  border: 0;
+  border: none;
   border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
   font-weight: 700;
 }
 
-.auth-tab.active {
-  background: #ffffff;
-  color: #2563eb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+.tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-#auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
+.field {
+  margin-bottom: 17px;
 }
 
-#auth-form label {
-  margin-top: 8px;
-  color: #334155;
+.field label {
+  display: block;
+  margin-bottom: 7px;
   font-size: 14px;
   font-weight: 700;
 }
 
-#auth-form input,
-#weather-city,
-#message-input {
+input {
   width: 100%;
   min-width: 0;
-  padding: 12px 13px;
-  color: #0f172a;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 9px;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   outline: none;
+  background: white;
+  color: var(--text);
 }
 
-#auth-form input:focus,
-#weather-city:focus,
-#message-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.primary-button,
-#weather-search-button,
-#send-button {
-  color: #ffffff;
-  background: #2563eb;
-  border: 0;
-  border-radius: 9px;
+.primary-btn {
+  padding: 13px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
   font-weight: 700;
-  padding: 12px 16px;
+  transition: background 0.2s;
 }
 
-.primary-button {
-  margin-top: 12px;
+.primary-btn:hover {
+  background: var(--primary-dark);
 }
 
-.primary-button:hover,
-#weather-search-button:hover,
-#send-button:hover {
-  background: #1d4ed8;
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.status-message {
+#auth-submit {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.status {
   min-height: 18px;
-  margin: 12px 0 0;
+  margin: 10px 0 0;
+  color: var(--muted);
   font-size: 13px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.status.error {
+  color: #c62828;
+}
+
+.status.success {
+  color: #16834a;
 }
 
 .chat-card {
   overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(28, 35, 80, 0.06);
 }
 
 .chat-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 18px 20px;
-  color: #ffffff;
-  background: #2563eb;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
 }
 
-.chat-brand {
+.brand-small {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0;
-}
-
-.chat-logo {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 9px;
-  background: #ffffff;
-}
-
-.chat-brand h2 {
-  margin: 0 0 4px;
-  color: #ffffff;
-  font-size: 21px;
-}
-
-.chat-brand p {
   margin: 0;
-  color: #dbeafe;
-  font-size: 13px;
-  overflow-wrap: anywhere;
+  text-align: left;
 }
 
-.logout-button {
-  padding: 9px 12px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 8px;
+.brand-small .brand-icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  border-radius: 13px;
+}
+
+.brand-small h1 {
+  font-size: 20px;
+}
+
+.brand-small p {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.logout-btn {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: white;
+  color: var(--text);
   font-weight: 700;
 }
 
-.logout-button:hover {
-  background: rgba(255, 255, 255, 0.25);
+.logout-btn:hover {
+  background: #f5f5fa;
 }
 
 .weather-card {
-  margin: 18px 18px 12px;
-  padding: 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 13px;
-  background: #f8fbff;
+  padding: 22px 24px;
+  background: #fafaff;
+  border-bottom: 1px solid var(--border);
 }
 
-.weather-card h3 {
-  margin: 0 0 6px;
-  color: #1d4ed8;
+.weather-card h2,
+.messages-heading h2 {
+  margin: 0;
   font-size: 18px;
 }
 
-.weather-subtitle {
-  margin: 0 0 12px;
-  color: #64748b;
+.weather-card > div:first-child p {
+  margin: 7px 0 16px;
+  color: var(--muted);
   font-size: 13px;
 }
 
-#weather-form {
+.weather-form {
   display: flex;
-  gap: 8px;
+  gap: 9px;
 }
 
-#weather-city {
+.weather-form input {
   flex: 1;
 }
 
-#weather-search-button {
-  flex-shrink: 0;
-}
-
-.weather-status {
-  margin: 10px 0 0;
-  color: #475569;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
 .weather-result {
-  margin-top: 12px;
-  padding: 14px;
-  border-radius: 10px;
-  background: #eff6ff;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: white;
 }
 
-.weather-location {
-  margin: 0;
-  color: #334155;
-  font-weight: 700;
+.weather-result h3 {
+  margin: 0 0 6px;
+  font-size: 19px;
 }
 
-.weather-temperature {
-  margin: 6px 0;
-  color: #1d4ed8;
-  font-size: 32px;
-  font-weight: 800;
-}
-
-.weather-description {
-  margin: 0 0 12px;
-  color: #334155;
-  font-weight: 600;
+#weather-description {
+  margin: 0 0 16px;
+  color: var(--muted);
 }
 
 .weather-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  color: #475569;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.weather-details div {
+  padding: 11px;
+  border-radius: 9px;
+  background: #f5f6ff;
+}
+
+.weather-details span,
+.weather-details strong {
+  display: block;
+}
+
+.weather-details span {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.weather-details strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.weather-time {
+  margin: 14px 0 0;
+  color: var(--muted);
   font-size: 12px;
 }
 
-.weather-updated {
-  margin: 12px 0 0;
-  color: #64748b;
-  font-size: 11px;
+.messages-section {
+  padding: 22px 24px;
 }
 
-.chat-title {
+.messages-heading {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  padding: 10px 20px;
+  margin-bottom: 18px;
 }
 
-.chat-title h3 {
-  margin: 0;
-  font-size: 17px;
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #16834a;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
-#connection-status {
-  color: #64748b;
-  font-size: 11px;
+.live-indicator span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
 }
 
-.messages-container {
+.messages {
   display: flex;
   flex-direction: column;
-  gap: 13px;
-  height: 360px;
+  gap: 15px;
+  min-height: 280px;
+  max-height: 470px;
   overflow-y: auto;
-  padding: 18px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fafbff;
+  scroll-behavior: smooth;
 }
 
-.empty-message {
+.empty-state {
   margin: auto;
-  color: #94a3b8;
-  text-align: center;
+  color: var(--muted);
   font-size: 14px;
+  text-align: center;
 }
 
 .message {
-  align-self: flex-start;
-  max-width: 82%;
-  min-width: 90px;
-  padding: 10px 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px 12px 12px 3px;
-  overflow-wrap: anywhere;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 85%;
+  gap: 5px;
 }
 
-.message.own-message {
+.message.own {
   align-self: flex-end;
-  background: #dbeafe;
-  border-color: #bfdbfe;
-  border-radius: 12px 12px 3px 12px;
+  align-items: flex-end;
 }
 
 .message-sender {
-  margin-bottom: 6px;
-  color: #1d4ed8;
+  padding-left: 4px;
+  color: #4f46e5;
   font-size: 12px;
-  font-weight: 800;
-}
-
-.message-content {
-  color: #1e293b;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
+.message-bubble {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 13px 13px 13px 4px;
+  background: white;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.message.own .message-bubble {
+  border-color: transparent;
+  border-radius: 13px 13px 4px 13px;
+  background: var(--own-message);
+}
+
 .message-time {
-  margin-top: 7px;
-  color: #64748b;
-  text-align: right;
+  padding: 0 4px;
+  color: var(--muted);
   font-size: 10px;
 }
 
 .message-form {
   display: flex;
   gap: 9px;
-  padding: 16px 18px 6px;
+  margin-top: 15px;
 }
 
-#message-input {
+.message-form input {
   flex: 1;
 }
 
-#send-button {
-  min-width: 76px;
-}
-
-#chat-message {
-  padding: 0 18px 14px;
-  color: #475569;
-}
-
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   body {
-    padding: 10px;
+    padding: 12px 8px;
   }
 
   .auth-card {
-    padding: 22px 18px;
-    margin: 18px auto;
+    margin: 20px auto;
+    padding: 23px 18px;
   }
 
-  .chat-header {
-    padding: 14px;
+  .chat-header,
+  .weather-card,
+  .messages-section {
+    padding: 17px 14px;
   }
 
-  .chat-brand h2 {
-    font-size: 18px;
+  .brand-small {
+    gap: 9px;
   }
 
-  .chat-logo {
-    width: 36px;
-    height: 36px;
+  .brand-small h1 {
+    font-size: 17px;
   }
 
-  .weather-card {
-    margin: 12px;
+  .logout-btn {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .weather-form,
+  .message-form {
+    gap: 7px;
+  }
+
+  .weather-form .primary-btn,
+  .message-form .primary-btn {
     padding: 12px;
   }
 
-  .messages-container {
-    height: 320px;
-    padding: 12px;
+  .weather-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .messages {
+    min-height: 250px;
+    padding: 11px;
   }
 
   .message {
-    max-width: 90%;
-  }
-
-  .chat-title {
-    padding: 10px 12px;
-  }
-
-  .message-form {
-    padding: 12px 12px 6px;
-  }
-
-  #weather-search-button {
-    padding: 10px;
+    max-width: 92%;
   }
 }
