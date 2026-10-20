@@ -7,8 +7,8 @@ const SUPABASE_KEY = "sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci";
 
 const configIsReady =
   SUPABASE_URL.startsWith("https://") &&
-  !SUPABASE_URL.includes("PASTE_") &&
-  !SUPABASE_KEY.includes("PASTE_");
+  !SUPABASE_URL.includes("https://tjsfqxisaijqgwoskeno.supabase.co") &&
+  !SUPABASE_KEY.includes("sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci");
 
 const sb = configIsReady
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
