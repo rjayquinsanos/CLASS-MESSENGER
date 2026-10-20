@@ -1,251 +1,332 @@
-/* =========================================
-   CLASS CHAT APP - SUPABASE CONFIGURATION
-   ========================================= */
+/* =================================
+   SUPABASE CONFIGURATION
+================================= */
 
-const SUPABASE_URL = "https://tjsfqxisaijqgwoskeno.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 
-const $ = (selector) => document.querySelector(selector);
+const sb = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
-const authScreen = $("#auth-screen");
-const chatScreen = $("#chat-screen");
-const authForm = $("#auth-form");
-const nameField = $("#name-field");
-const displayNameInput = $("#display-name");
-const emailInput = $("#email");
-const passwordInput = $("#password");
-const authTitle = $("#auth-title");
-const authSubtitle = $("#auth-subtitle");
-const authStatus = $("#auth-status");
-const loginButton = $("#login-button");
-const signupButton = $("#signup-button");
-const currentName = $("#current-name");
-const chatStatus = $("#chat-status");
-const messageList = $("#message-list");
-const messageForm = $("#message-form");
-const messageInput = $("#message-input");
-const sendButton = $("#send-button");
-const logoutButton = $("#logout-button");
+/* =================================
+   HTML ELEMENTS
+================================= */
 
-let sb = null;
+const authScreen = document.getElementById("auth-screen");
+const chatScreen = document.getElementById("chat-screen");
+
+const authForm = document.getElementById("auth-form");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+
+const loginTab = document.getElementById("login-tab");
+const signupTab = document.getElementById("signup-tab");
+const loginButton = document.getElementById("login-button");
+const signupButton = document.getElementById("signup-button");
+
+const authMessage = document.getElementById("auth-message");
+const chatMessage = document.getElementById("chat-message");
+
+const logoutButton = document.getElementById("logout-button");
+const messagesContainer = document.getElementById("messages");
+const messageForm = document.getElementById("message-form");
+const messageInput = document.getElementById("message-input");
+const sendButton = document.getElementById("send-button");
+
+let authMode = "login";
 let currentUser = null;
 let messageChannel = null;
-let authMode = "login";
-let loadingMessages = false;
 
-function setStatus(element, message = "", type = "") {
-  element.textContent = message;
-  element.className = "status" + (type ? " " + type : "");
+/* =================================
+   AUTH SCREEN
+================================= */
+
+function showAuthMessage(message, isError = false) {
+  authMessage.textContent = message;
+  authMessage.style.color = isError ? "#dc2626" : "#2563eb";
 }
 
-function showAuth() {
-  authScreen.classList.remove("hidden");
-  chatScreen.classList.add("hidden");
-}
-
-function showChat() {
-  authScreen.classList.add("hidden");
-  chatScreen.classList.remove("hidden");
+function showChatMessage(message, isError = false) {
+  chatMessage.textContent = message;
+  chatMessage.style.color = isError ? "#dc2626" : "#2563eb";
 }
 
 function setAuthMode(mode) {
   authMode = mode;
-  const signingUp = mode === "signup";
 
-  authTitle.textContent = signingUp ? "Create your account" : "Welcome back!";
-  authSubtitle.textContent = signingUp
-    ? "Join your class and start connecting."
-    : "Sign in to continue to your class.";
+  const isLogin = mode === "login";
 
-  nameField.classList.toggle("hidden", !signingUp);
-  displayNameInput.required = signingUp;
-  passwordInput.autocomplete = signingUp ? "new-password" : "current-password";
+  loginTab.classList.toggle("active", isLogin);
+  signupTab.classList.toggle("active", !isLogin);
 
-  loginButton.classList.toggle("hidden", signingUp);
-  signupButton.classList.toggle("hidden", !signingUp);
+  loginButton.style.display = isLogin ? "block" : "none";
+  signupButton.style.display = isLogin ? "none" : "block";
 
-  loginButton.disabled = false;
-  signupButton.disabled = false;
-  setStatus(authStatus);
+  passwordInput.autocomplete = isLogin
+    ? "current-password"
+    : "new-password";
+
+  showAuthMessage("");
 }
 
-// The two buttons switch between login and signup modes.
-loginButton.addEventListener("click", () => {
-  if (authMode !== "login") {
-    setAuthMode("login");
-    setStatus(authStatus);
-  }
+loginTab.addEventListener("click", () => {
+  setAuthMode("login");
 });
 
-signupButton.addEventListener("click", () => {
-  if (authMode !== "signup") {
-    setAuthMode("signup");
-    setStatus(authStatus);
-  }
+signupTab.addEventListener("click", () => {
+  setAuthMode("signup");
 });
 
-function configureSupabase() {
-  if (!window.supabase || !window.supabase.createClient) {
-    setStatus(
-      authStatus,
-      "The Supabase library did not load. Refresh the page and try again.",
-      "error"
+/* =================================
+   SIGN UP
+================================= */
+
+signupButton.addEventListener("click", async () => {
+  if (!authForm.reportValidity()) return;
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (password.length < 6) {
+    showAuthMessage(
+      "Password must be at least 6 characters.",
+      true
     );
-    loginButton.disabled = true;
-    signupButton.disabled = true;
-    return false;
+    return;
   }
 
-  if (
-    SUPABASE_URL.includes("PASTE_YOUR_") ||
-    SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR_") ||
-    !SUPABASE_URL.startsWith("https://") ||
-    !SUPABASE_PUBLISHABLE_KEY.trim()
-  ) {
-    setStatus(
-      authStatus,
-      "Add your Supabase Project URL and Publishable key in script.js.",
-      "error"
-    );
-    return false;
-  }
+  signupButton.disabled = true;
+  showAuthMessage("Creating your account...");
 
   try {
-    sb = window.supabase.createClient(
-      SUPABASE_URL.trim(),
-      SUPABASE_PUBLISHABLE_KEY.trim()
-    );
-    return true;
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    if (data.session) {
+      await handleLoggedInUser(data.session.user);
+    } else {
+      showAuthMessage(
+        "Account created! Check your email to confirm your account, then log in."
+      );
+      setAuthMode("login");
+    }
   } catch (error) {
-    setStatus(authStatus, "Supabase setup error: " + error.message, "error");
-    return false;
+    showAuthMessage(error.message, true);
+  } finally {
+    signupButton.disabled = false;
   }
+});
+
+/* =================================
+   LOG IN
+================================= */
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (authMode !== "login") return;
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  loginButton.disabled = true;
+  showAuthMessage("Logging in...");
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    await handleLoggedInUser(data.user);
+  } catch (error) {
+    showAuthMessage(error.message, true);
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+
+/* =================================
+   LOGIN SESSION
+================================= */
+
+async function handleLoggedInUser(user) {
+  currentUser = user;
+
+  authScreen.hidden = true;
+  chatScreen.hidden = false;
+
+  showChatMessage("");
+  await loadMessages();
+  subscribeToMessages();
 }
 
-function getDisplayName(user) {
-  return (
-    user?.user_metadata?.display_name ||
-    user?.email?.split("@")[0] ||
-    "Student"
-  );
+async function handleLoggedOutUser() {
+  currentUser = null;
+
+  if (messageChannel) {
+    await sb.removeChannel(messageChannel);
+    messageChannel = null;
+  }
+
+  authScreen.hidden = false;
+  chatScreen.hidden = true;
+
+  messagesContainer.replaceChildren();
+  setAuthMode("login");
 }
 
-function formatTime(timestamp) {
-  if (!timestamp) return "";
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return "";
+/* =================================
+   LOG OUT
+================================= */
 
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
+logoutButton.addEventListener("click", async () => {
+  logoutButton.disabled = true;
+
+  try {
+    const { error } = await sb.auth.signOut();
+    if (error) throw error;
+
+    await handleLoggedOutUser();
+  } catch (error) {
+    showChatMessage(error.message, true);
+  } finally {
+    logoutButton.disabled = false;
+  }
+});
+
+/* =================================
+   DISPLAY MESSAGES
+================================= */
 
 function renderMessage(message) {
-  const emptyState = messageList.querySelector(".empty-state");
-  if (emptyState) emptyState.remove();
+  const item = document.createElement("div");
+  item.className = "message";
 
-  // Build message elements with textContent to avoid rendering HTML
-  // submitted by another user.
-  const wrapper = document.createElement("article");
-  wrapper.className =
-    "message" + (message.user_id === currentUser?.id ? " own" : "");
-  wrapper.dataset.messageId = message.id || "";
+  if (message.user_id === currentUser?.id) {
+    item.classList.add("own-message");
+  }
 
-  const author = document.createElement("div");
-  author.className = "message-author";
-  author.textContent =
+  const sender = document.createElement("div");
+  sender.className = "message-sender";
+  sender.textContent =
     message.user_id === currentUser?.id
       ? "You"
-      : message.display_name || "Classmate";
+      : "Classmate";
 
   const content = document.createElement("p");
   content.className = "message-content";
-  content.textContent = message.content || "";
+  content.textContent = message.content;
 
-  const time = document.createElement("time");
+  const time = document.createElement("small");
   time.className = "message-time";
-  time.textContent = formatTime(message.created_at);
+  time.textContent = new Date(
+    message.created_at
+  ).toLocaleString([], {
+    dateStyle: "short",
+    timeStyle: "short"
+  });
 
-  wrapper.append(author, content, time);
-  messageList.appendChild(wrapper);
-  messageList.scrollTop = messageList.scrollHeight;
+  item.append(sender, content, time);
+  return item;
 }
 
-function showEmptyState(message = "Messages will appear here.") {
-  messageList.replaceChildren();
+function displayMessages(messages) {
+  messagesContainer.replaceChildren();
 
-  const box = document.createElement("div");
-  box.className = "empty-state";
+  if (!messages.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-message";
+    empty.textContent = "No messages yet. Say hello!";
+    messagesContainer.appendChild(empty);
+    return;
+  }
 
-  const icon = document.createElement("div");
-  icon.className = "empty-icon";
-  icon.textContent = "💬";
+  messages.forEach((message) => {
+    messagesContainer.appendChild(renderMessage(message));
+  });
 
-  const heading = document.createElement("h3");
-  heading.textContent = "Welcome to your class chat";
-
-  const description = document.createElement("p");
-  description.textContent = message;
-
-  box.append(icon, heading, description);
-  messageList.appendChild(box);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+/* =================================
+   LOAD CHAT HISTORY
+================================= */
 
 async function loadMessages() {
-  if (!sb || !currentUser || loadingMessages) return;
-
-  loadingMessages = true;
-  setStatus(chatStatus, "Loading messages...");
+  messagesContainer.textContent = "Loading messages...";
 
   try {
     const { data, error } = await sb
       .from("messages")
       .select("id, user_id, content, created_at")
       .order("created_at", { ascending: true })
-      .limit(100);
+      .limit(200);
 
     if (error) throw error;
 
-    messageList.replaceChildren();
-
-    if (!data || data.length === 0) {
-      showEmptyState("No messages yet. Be the first to say hello!");
-    } else {
-      data.forEach((message) => {
-        renderMessage({
-          ...message,
-          display_name: message.user_id === currentUser.id
-            ? getDisplayName(currentUser)
-            : "Classmate"
-        });
-      });
-    }
-
-    setStatus(chatStatus);
+    displayMessages(data || []);
   } catch (error) {
-    setStatus(
-      chatStatus,
-      "Couldn't load messages: " + error.message,
-      "error"
-    );
-  } finally {
-    loadingMessages = false;
+    messagesContainer.textContent =
+      "Could not load messages. Check your Supabase messages table and policies.";
+
+    console.error("Load messages error:", error);
   }
 }
 
-function subscribeToMessages() {
-  if (!sb || !currentUser) return;
+/* =================================
+   SEND A MESSAGE
+================================= */
 
+messageForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const content = messageInput.value.trim();
+  if (!content) return;
+
+  sendButton.disabled = true;
+
+  try {
+    const { error } = await sb
+      .from("messages")
+      .insert({
+        user_id: currentUser.id,
+        content
+      });
+
+    if (error) throw error;
+
+    messageInput.value = "";
+    showChatMessage("");
+  } catch (error) {
+    showChatMessage(error.message, true);
+  } finally {
+    sendButton.disabled = false;
+    messageInput.focus();
+  }
+});
+
+/* =================================
+   REAL-TIME CHAT
+================================= */
+
+function subscribeToMessages() {
   if (messageChannel) {
     sb.removeChannel(messageChannel);
-    messageChannel = null;
   }
 
   messageChannel = sb
-    .channel("class-chat-live-messages")
+    .channel("class-chat-messages")
     .on(
       "postgres_changes",
       {
@@ -254,222 +335,71 @@ function subscribeToMessages() {
         table: "messages"
       },
       (payload) => {
+        if (!currentUser) return;
+
+        const emptyMessage =
+          messagesContainer.querySelector(".empty-message");
+
+        if (emptyMessage) {
+          emptyMessage.remove();
+        }
+
         const message = payload.new;
 
-        // Avoid adding a duplicate when a live update arrives
-        // for a message already rendered.
         if (
-          messageList.querySelector(
-            `[data-message-id="${CSS.escape(String(message.id))}"]`
+          !messagesContainer.querySelector(
+            `[data-message-id="${message.id}"]`
           )
         ) {
-          return;
+          const element = renderMessage(message);
+          element.dataset.messageId = message.id;
+          messagesContainer.appendChild(element);
+          messagesContainer.scrollTop =
+            messagesContainer.scrollHeight;
         }
-
-        renderMessage({
-          ...message,
-          display_name:
-            message.user_id === currentUser.id
-              ? getDisplayName(currentUser)
-              : "Classmate"
-        });
       }
     )
-    .subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        setStatus(
-          chatStatus,
-          "Live updates aren't connected. Refresh to try again.",
-          "error"
-        );
-      }
-    });
+    .subscribe();
 }
 
-async function enterChat(user) {
-  currentUser = user;
-  currentName.textContent = getDisplayName(user);
-  showChat();
-  messageInput.value = "";
+/* =================================
+   INITIALIZE APP
+================================= */
 
-  await loadMessages();
-  subscribeToMessages();
-}
-
-// Handle both Login and Create Account through the form.
-authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!sb) {
-    setStatus(
-      authStatus,
-      "Supabase is not configured. Check your URL and key in script.js.",
-      "error"
+async function initializeApp() {
+  if (
+    SUPABASE_URL.includes("PASTE_YOUR") ||
+    SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR")
+  ) {
+    showAuthMessage(
+      "Add your Supabase project URL and publishable key in script.js.",
+      true
     );
     return;
   }
-
-  const submitter = event.submitter;
-  if (submitter?.id === "login-button") authMode = "login";
-  if (submitter?.id === "signup-button") authMode = "signup";
-
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-  const displayName = displayNameInput.value.trim();
-
-  if (!email || !password) {
-    setStatus(authStatus, "Please enter your email and password.", "error");
-    return;
-  }
-
-  if (authMode === "signup" && !displayName) {
-    setStatus(authStatus, "Please enter your display name.", "error");
-    return;
-  }
-
-  loginButton.disabled = true;
-  signupButton.disabled = true;
-  setStatus(authStatus, authMode === "signup" ? "Creating account..." : "Logging in...");
-
-  try {
-    if (authMode === "signup") {
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { display_name: displayName }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.session && data.user) {
-        setStatus(authStatus, "Account created. Opening chat...", "success");
-        await enterChat(data.user);
-      } else {
-        setStatus(
-          authStatus,
-          "Account created. Check your email if confirmation is required, then log in.",
-          "success"
-        );
-        setAuthMode("login");
-      }
-    } else {
-      const { data, error } = await sb.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) throw error;
-
-      if (!data.user) {
-        throw new Error("Login did not return a user. Please try again.");
-      }
-
-      setStatus(authStatus, "Login successful!", "success");
-      await enterChat(data.user);
-    }
-  } catch (error) {
-    setStatus(authStatus, error.message || "Something went wrong.", "error");
-  } finally {
-    loginButton.disabled = false;
-    signupButton.disabled = false;
-  }
-});
-
-// Send a new class message.
-messageForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!sb || !currentUser) {
-    setStatus(chatStatus, "Please log in again to send a message.", "error");
-    return;
-  }
-
-  const content = messageInput.value.trim();
-  if (!content) return;
-
-  sendButton.disabled = true;
-  setStatus(chatStatus, "Sending message...");
-
-  try {
-    const { error } = await sb.from("messages").insert({
-      user_id: currentUser.id,
-      content
-    });
-
-    if (error) throw error;
-
-    messageInput.value = "";
-    setStatus(chatStatus);
-  } catch (error) {
-    setStatus(
-      chatStatus,
-      "Message not sent: " + error.message,
-      "error"
-    );
-  } finally {
-    sendButton.disabled = false;
-    messageInput.focus();
-  }
-});
-
-// Log out and stop live message updates.
-logoutButton.addEventListener("click", async () => {
-  logoutButton.disabled = true;
-
-  try {
-    if (messageChannel) {
-      await sb.removeChannel(messageChannel);
-      messageChannel = null;
-    }
-
-    const { error } = await sb.auth.signOut();
-    if (error) throw error;
-
-    currentUser = null;
-    messageList.replaceChildren();
-    authForm.reset();
-    setAuthMode("login");
-    setStatus(authStatus, "You have logged out.", "success");
-    showAuth();
-  } catch (error) {
-    setStatus(chatStatus, "Couldn't log out: " + error.message, "error");
-  } finally {
-    logoutButton.disabled = false;
-  }
-});
-
-// Restore the existing login session after a refresh.
-async function startApp() {
-  setAuthMode("login");
-
-  if (!configureSupabase()) return;
 
   try {
     const { data, error } = await sb.auth.getSession();
+
     if (error) throw error;
 
-    if (data.session?.user) {
-      await enterChat(data.session.user);
+    if (data.session) {
+      await handleLoggedInUser(data.session.user);
     } else {
-      showAuth();
+      setAuthMode("login");
     }
 
     sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
+      if (event === "SIGNED_OUT" || !session) {
         currentUser = null;
-        if (messageChannel) {
-          sb.removeChannel(messageChannel);
-          messageChannel = null;
-        }
-        showAuth();
       }
     });
   } catch (error) {
-    setStatus(authStatus, "Couldn't check your session: " + error.message, "error");
-    showAuth();
+    showAuthMessage(
+      "Could not connect to Supabase: " + error.message,
+      true
+    );
   }
 }
 
-startApp();
+initializeApp();
