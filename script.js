@@ -2,8 +2,8 @@
 // 1. SUPABASE CONFIGURATION
 // ======================================
 
-const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
-const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_OR_ANON_KEY_HERE";
+const SUPABASE_URL = "https://tjsfqxisaijqgwoskeno.supabase.co";
+const SUPABASE_KEY = "sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci";
 
 const configIsReady =
   SUPABASE_URL.startsWith("https://") &&
