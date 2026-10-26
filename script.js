@@ -16,8 +16,10 @@ let loadingMessages = false;
 
 function setStatus(id, message, type = "") {
   const el = $(id);
-  el.textContent = message;
-  el.className = `status ${type}`;
+  if (el) {
+    el.textContent = message;
+    el.className = `status ${type}`;
+  }
 }
 
 function setAuthMode(mode) {
@@ -46,11 +48,13 @@ $("login-tab").addEventListener("click", () => setAuthMode("login"));
 $("signup-tab").addEventListener("click", () => setAuthMode("signup"));
 
 async function saveUserProfile(user, fullName, username) {
-  const cleanName = String(fullName || "").trim();
-  const cleanUsername = String(username || "").trim();
+  const fallbackName = user?.email ? user.email.split("@")[0] : "Classmate";
+  const cleanName = String(fullName || user?.user_metadata?.full_name || fallbackName).trim();
+  const rawUsername = username || user?.user_metadata?.username || cleanName;
+  const cleanUsername = String(rawUsername).toLowerCase().replace(/[^a-z0-9_]/g, "").trim() || "user_" + Math.floor(Math.random() * 100000);
 
-  if (!user?.id || !cleanName || !cleanUsername) {
-    throw new Error("Your full name and username are required.");
+  if (!user?.id) {
+    throw new Error("User ID is missing.");
   }
 
   const { data, error } = await sb
@@ -68,9 +72,7 @@ async function saveUserProfile(user, fullName, username) {
 
   if (error) {
     console.error("Profile save failed detail:", error);
-    throw new Error(
-      error.message || "Could not save your profile name. Check the profiles table and its RLS policies."
-    );
+    throw new Error(error.message || "Could not save your profile name.");
   }
 
   return data;
@@ -91,10 +93,7 @@ async function loadProfile(user) {
   if (data) return data;
 
   const metadata = user.user_metadata || {};
-  const name = metadata.full_name || user.email?.split("@")[0] || "Classmate";
-  const username = metadata.username || name.replace(/\s+/g, "").toLowerCase();
-
-  return await saveUserProfile(user, name, username);
+  return await saveUserProfile(user, metadata.full_name, metadata.username);
 }
 
 async function enterChat(user) {
@@ -133,17 +132,13 @@ $("auth-form").addEventListener("submit", async (event) => {
 
   try {
     if (authMode === "signup") {
-      if (!fullName || !username) {
-        throw new Error("Enter your full name and username.");
-      }
-
       const { data, error } = await sb.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: fullName,
-            username
+            full_name: fullName || email.split("@")[0],
+            username: username || email.split("@")[0]
           }
         }
       });
