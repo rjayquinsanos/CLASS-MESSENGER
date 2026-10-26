@@ -1,4 +1,3 @@
-
 const SUPABASE_URL = "https://tjsfqxisaijqgwoskeno.supabase.co";
 const SUPABASE_KEY = "sb_publishable_kFLtDuMQyZvUbiyZErmSdw_RVdgSRci";
 
@@ -13,7 +12,6 @@ let authMode = "login";
 let currentUser = null;
 let currentProfile = null;
 let messageChannel = null;
-let profileChannel = null;
 let loadingMessages = false;
 
 function setStatus(id, message, type = "") {
