@@ -47,9 +47,9 @@ function setAuthMode(mode) {
 $("login-tab").addEventListener("click", () => setAuthMode("login"));
 $("signup-tab").addEventListener("click", () => setAuthMode("signup"));
 
-async function saveUserProfile(user, fullName, username) {
-  const fallbackName = user?.email ? user.email.split("@")[0] : "Classmate";
-  const cleanName = String(fullName || user?.user_metadata?.display_name || fallbackName).trim();
+async function saveUserProfile(user, displayName, username) {
+  const emailPrefix = user?.email ? user.email.split("@")[0] : "Classmate";
+  const cleanName = String(displayName || user?.user_metadata?.display_name || emailPrefix).trim() || "Classmate";
   const rawUsername = username || user?.user_metadata?.username || cleanName;
   const cleanUsername = String(rawUsername).toLowerCase().replace(/[^a-z0-9_]/g, "").trim() || "user_" + Math.floor(Math.random() * 100000);
 
