@@ -49,7 +49,7 @@ $("signup-tab").addEventListener("click", () => setAuthMode("signup"));
 
 async function saveUserProfile(user, fullName, username) {
   const fallbackName = user?.email ? user.email.split("@")[0] : "Classmate";
-  const cleanName = String(fullName || user?.user_metadata?.full_name || fallbackName).trim();
+  const cleanName = String(fullName || user?.user_metadata?.display_name || fallbackName).trim();
   const rawUsername = username || user?.user_metadata?.username || cleanName;
   const cleanUsername = String(rawUsername).toLowerCase().replace(/[^a-z0-9_]/g, "").trim() || "user_" + Math.floor(Math.random() * 100000);
 
@@ -62,12 +62,12 @@ async function saveUserProfile(user, fullName, username) {
     .upsert(
       {
         id: user.id,
-        full_name: cleanName,
+        display_name: cleanName,
         username: cleanUsername
       },
       { onConflict: "id" }
     )
-    .select("id, full_name, username")
+    .select("id, display_name, username")
     .single();
 
   if (error) {
@@ -81,7 +81,7 @@ async function saveUserProfile(user, fullName, username) {
 async function loadProfile(user) {
   const { data, error } = await sb
     .from("profiles")
-    .select("id, full_name, username")
+    .select("id, display_name, username")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -93,7 +93,7 @@ async function loadProfile(user) {
   if (data) return data;
 
   const metadata = user.user_metadata || {};
-  return await saveUserProfile(user, metadata.full_name, metadata.username);
+  return await saveUserProfile(user, metadata.display_name, metadata.username);
 }
 
 async function enterChat(user) {
@@ -107,7 +107,7 @@ async function enterChat(user) {
 
   try {
     currentProfile = await loadProfile(user);
-    $("current-user-name").textContent = currentProfile.full_name;
+    $("current-user-name").textContent = currentProfile.display_name;
     $("current-user-email").textContent = user.email || "";
 
     await loadMessages();
@@ -137,7 +137,7 @@ $("auth-form").addEventListener("submit", async (event) => {
         password,
         options: {
           data: {
-            full_name: fullName || email.split("@")[0],
+            display_name: fullName || email.split("@")[0],
             username: username || email.split("@")[0]
           }
         }
@@ -207,7 +207,7 @@ async function loadMessages() {
     if (userIds.length) {
       const { data: profileRows, error: profileError } = await sb
         .from("profiles")
-        .select("id, full_name, username")
+        .select("id, display_name, username")
         .in("id", userIds);
 
       if (profileError) throw profileError;
@@ -244,7 +244,7 @@ function renderMessages(messages, profiles) {
 
   for (const message of messages) {
     const profile = profiles[message.user_id];
-    const senderName = profile?.full_name || profile?.username || "Classmate";
+    const senderName = profile?.display_name || profile?.username || "Classmate";
 
     const bubble = document.createElement("article");
     bubble.className =
