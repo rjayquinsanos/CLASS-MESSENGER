@@ -67,9 +67,9 @@ async function saveUserProfile(user, fullName, username) {
     .single();
 
   if (error) {
-    console.error("Profile save failed:", error);
+    console.error("Profile save failed detail:", error);
     throw new Error(
-      "Could not save your profile name. Check the profiles table and its RLS policies."
+      error.message || "Could not save your profile name. Check the profiles table and its RLS policies."
     );
   }
 
@@ -157,9 +157,10 @@ $("auth-form").addEventListener("submit", async (event) => {
       if (!data.session) {
         setStatus(
           "auth-status",
-          "Account created! Check your email to confirm your account, then log in.",
+          "Account created! Please log in.",
           "success"
         );
+        setAuthMode("login");
         return;
       }
 
